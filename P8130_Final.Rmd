@@ -17,6 +17,14 @@ library(performance)
 ```{r}
 # Import dataset
 density_df = read_excel("body_density_data.xlsx")
+dat.density = as.data.frame(density_df)
+```
+
+```{r}
+# Provide descriptive statistics for all variables of interest
+dat.density %>% 
+  gtsummary::tbl_summary() %>%
+  gtsummary::bold_labels()
 ```
 
 ```{r}
