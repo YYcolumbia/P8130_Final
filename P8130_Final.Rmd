@@ -12,6 +12,7 @@ library(leaps)
 library(caret)
 library(readxl)
 library(performance)
+library(GGally)
 ```
 
 ```{r}
@@ -25,6 +26,14 @@ dat.density = as.data.frame(density_df)
 dat.density %>% 
   gtsummary::tbl_summary() %>%
   gtsummary::bold_labels()
+```
+
+```{r, message=FALSE, warning=FALSE}
+# Pairwise association
+dat.density %>% 
+  select(-id, -bodyfat_siri, -body_density) %>% 
+  relocate(`bodyfat_brozek`) %>% 
+  ggpairs()
 ```
 
 ```{r}
@@ -118,6 +127,6 @@ method = 'lm',
 na.action = na.pass)
 
 model_density$finalModel
-print(model_caret)
+print(model_density)
 ```
 
