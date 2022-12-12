@@ -1,0 +1,115 @@
+---
+title: "P8130_Final"
+output: github_document
+date: "2022-12-11"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(faraway)
+library(glmnet)
+library(leaps)
+library(caret)
+library(readxl)
+library(performance)
+```
+
+```{r}
+# Import dataset
+density_df = read_excel("body_density_data.xlsx")
+```
+
+```{r}
+# Checking normality
+hist(density_df$age)
+hist(density_df$weight)
+hist(density_df$height)
+hist(density_df$neck)
+hist(density_df$chest)
+hist(density_df$abdomen)
+hist(density_df$hip)
+hist(density_df$thigh)
+hist(density_df$knee)
+hist(density_df$ankle)
+hist(density_df$bicep)
+hist(density_df$forearm)
+hist(density_df$wrist)
+```
+
+All distribution of variables seems fairly symmetric and normal (probably with ourliers in some variables), no transformation required.
+
+```{r}
+# Check for transformation in predictor
+mult.fit = lm(bodyfat_brozek ~ age + weight + height + neck + chest + abdomen + hip + thigh + knee + ankle + bicep + forearm + wrist, data = density_df)
+
+par(mfrow = c(2,2))
+plot(mult.fit)
+```
+
+No transformation needed.
+
+```{r}
+# fit regression using all predictors
+summary(mult.fit)
+```
+
+Since we are looking for multiple best subsets, it's better to use automatic approach to do model selection.
+
+```{r}
+# Backward Elimination
+step(mult.fit, direction='backward')
+```
+
+```{r}
+# Check for violations of regression model assumptions
+mult.fitfinal = lm(bodyfat_brozek ~ age + weight + neck + abdomen + hip + thigh + forearm + wrist, data = density_df)
+par(mfrow = c(2,2))
+plot(mult.fitfinal)
+```
+
+```{r}
+# MLR for final model
+multreg_fat = lm(bodyfat_brozek ~ age + weight + neck + abdomen + hip + thigh + forearm + wrist, data = density_df)
+summary(multreg_fat)
+anova(multreg_fat)
+```
+
+```{r}
+# Checking to Outliers and Influential Points
+plot(mult.fitfinal, which = 4)
+```
+```{r}
+# remove influential points
+fitOut = density_df[-c(39,216),]
+
+# fit model with and without influential points
+with = lm(bodyfat_brozek ~ age + weight + neck + abdomen + hip + thigh + forearm + wrist, data = density_df)
+without = lm(bodyfat_brozek ~ age + weight + neck + abdomen + hip + thigh + forearm + wrist, data = fitOut)
+summary(with); summary(without)
+
+plot(without)
+```
+
+```{r}
+# Assessing Multicollinearity
+
+# Calculate the variance inflation factor (VIF)
+check_collinearity(without)
+```
+
+
+```{r}
+# Model validation
+set.seed(1)
+# Use 5-fold validation and create the training sets
+train = trainControl(method = "cv", number = 5)
+model_density = train(bodyfat_brozek ~ age + weight + neck + abdomen + hip + thigh + forearm + wrist,
+data = density_df,
+trControl = train,
+method = 'lm',
+na.action = na.pass)
+
+model_density$finalModel
+print(model_caret)
+```
+
